@@ -1,89 +1,136 @@
-# CMPE591 - Homework 4: Learning from Demonstration with CNMPs
+# CMPE591: Homework 4 - Learning from Demonstration with CNMPs
 
-This repository contains the implementation of a Conditional Neural Process (CNP) model for learning robot manipulation tasks from demonstrations. The model is trained to predict both end-effector and object positions based on observed context points.
+This repository contains the implementation of Homework 4 for CMPE591, which focuses on learning from demonstration using Conditional Neural Processes (CNPs). The goal is to train a CNP model to predict robot end-effector and object positions based on partial demonstrations and object height.
 
-## Problem Description
+## Overview
 
-In this homework, we collect demonstrations consisting of robot end-effector and object trajectories and use Conditional Neural Processes (CNMPs) to learn from these demonstrations. The goal is to predict both the end-effector and object positions based on context points given the time and object height.
+In this homework, we collect demonstrations that consist of (t, e_y, e_z, o_y, o_z, h) where:
+- t is the time (query dimension)
+- e_y, e_z are the end-effector cartesian coordinates
+- o_y, o_z are the object cartesian coordinates
+- h is the height of the object (condition)
 
-The dataset is represented as: {(t, e_y, e_z, o_y, o_z), h}^N_{i=0} where:
-- t: time (query dimension)
-- e_y, e_z: end-effector y and z coordinates
-- o_y, o_z: object y and z coordinates
-- h: height of the object (condition)
+The robot randomly moves its end-effector in the y-z plane, sometimes hitting the object and sometimes not. The height of the object is random and is provided from the environment.
 
-The model is trained to predict end-effector and object positions given a set of context points and query points.
+We train a CNP model to predict the end-effector and object positions given:
+1. The time t (query dimension)
+2. The object height h (condition)
+3. Context points consisting of other (t, e_y, e_z, o_y, o_z) points
 
-## Implementation
+## Project Structure
 
-The solution consists of the following components:
-
-1. **Data Generation**: We generate synthetic data that mimics robot demonstrations. Each trajectory contains time, end-effector coordinates, object coordinates, and object height.
-
-2. **CNMP Model**: We implement a Conditional Neural Process model that:
-   - Takes a set of context points with all dimensions (t, h, e_y, e_z, o_y, o_z)
-   - Predicts target dimensions (e_y, e_z, o_y, o_z) for a set of query points (t, h)
-
-3. **Training**: The model is trained to minimize the negative log-likelihood of the target points given the context points.
-
-4. **Evaluation**: We test the model on new randomly generated trajectories and compute the mean squared error between the predicted and ground truth values.
-
-## Files
-
-- `cnp.py`: Standalone implementation of the Conditional Neural Process model
-- `utils.py`: Utility functions for data generation, visualization, and the RobotCNMP class
-- `train_cnmp.py`: Script for training the CNMP model
-- `test_cnmp.py`: Script for testing the trained CNMP model
-- `README.md`: Documentation for the project
-
-## How to Run
-
-To train the model:
-
-```bash
-python train_cnmp.py
+```
+.
+├── cnp_model.py         # Implementation of the Conditional Neural Process model
+├── train.py             # Script to collect demonstrations and train the CNP model
+├── test.py              # Script to test the trained model
+├── data/                # Directory to store collected demonstrations and results
+├── model/               # Directory to store trained models
+└── README.md            # This file
 ```
 
-This will:
-1. Generate 100 synthetic training trajectories (or load existing ones if available)
-2. Train the CNMP model for 100 epochs
-3. Save the trained model to disk
+## Setup and Requirements
 
-To test the model:
+The code requires the following packages:
+- PyTorch >= 2.0.0 (for MPS support on Apple Silicon)
+- NumPy
+- Matplotlib
+- tqdm
+- scikit-learn
 
+Install the requirements with:
 ```bash
-python test_cnmp.py
+pip install -r requirements.txt
 ```
 
-This will:
-1. Generate 100 synthetic test trajectories (or load existing ones if available)
-2. Load the trained model
-3. Test the model on the test data
-4. Generate visualization plots for model predictions and test errors
+## Usage
 
-## Note on Implementation
+The code is designed to be run with just two scripts: `train.py` and `test.py`. Each script will automatically generate demonstrations if needed, so there's no dependency on external data collection processes.
 
-While the original assignment involves using the provided robot environment to collect demonstrations, this implementation uses synthetic data that simulates similar trajectories. This approach allows us to demonstrate the core concepts of Conditional Neural Processes without requiring the complex environment setup.
+### 1. Training the CNP Model
 
-The synthetic data generation creates trajectories that mimic the behavior of the robot's end-effector and the object it manipulates, with the object's movement influenced by both the end-effector movement and the object's height.
+To train the CNP model, run:
+
+```bash
+python train.py [--data_path DATA_PATH] [--hidden_size HIDDEN_SIZE] [--num_hidden_layers NUM_HIDDEN_LAYERS] [--learning_rate LEARNING_RATE] [--batch_size BATCH_SIZE] [--num_epochs NUM_EPOCHS] [--min_context MIN_CONTEXT] [--max_context MAX_CONTEXT] [--min_std MIN_STD] [--val_split VAL_SPLIT] [--device DEVICE] [--num_demonstrations NUM_DEMONSTRATIONS] [--model_dir MODEL_DIR] [--model_name MODEL_NAME]
+```
+
+Arguments:
+- `--data_path`: Path to the demonstration data (default: 'data/demonstrations.pkl')
+- `--hidden_size`: Hidden size of the model (default: 128)
+- `--num_hidden_layers`: Number of hidden layers (default: 3)
+- `--learning_rate`: Learning rate (default: 0.001)
+- `--batch_size`: Batch size (default: 32)
+- `--num_epochs`: Number of epochs (default: 100)
+- `--min_context`: Minimum number of context points (default: 3)
+- `--max_context`: Maximum number of context points (default: 20)
+- `--min_std`: Minimum standard deviation (default: 0.05)
+- `--val_split`: Validation split ratio (default: 0.2)
+- `--device`: Device to use (auto, cuda, mps, cpu) (default: 'auto')
+- `--num_demonstrations`: Number of demonstrations to collect if data file not found (default: 500)
+- `--model_dir`: Directory to save the trained model (default: 'model')
+- `--model_name`: Custom name for the model file (default: cnp_model_TIMESTAMP.pt)
+
+For Apple Silicon (M1, M2, M3) Macs, you can take advantage of MPS acceleration:
+
+```bash
+python train.py --device mps --hidden_size 256 --batch_size 64 --num_epochs 50
+```
+
+The script will:
+1. Generate demonstrations if the specified data file doesn't exist
+2. Train the CNP model on the demonstrations
+3. Save the trained model to the specified directory
+4. Plot and save the training/validation loss curves
+
+### 2. Testing the CNP Model
+
+To test the trained model, run:
+
+```bash
+python test.py --model_path MODEL_PATH [--data_path DATA_PATH] [--num_tests NUM_TESTS] [--num_plots NUM_PLOTS] [--device DEVICE] [--output_dir OUTPUT_DIR] [--num_demonstrations NUM_DEMONSTRATIONS]
+```
+
+Arguments:
+- `--model_path`: Path to the trained model (required)
+- `--data_path`: Path to the demonstration data (default: 'data/demonstrations.pkl')
+- `--num_tests`: Number of test cases (default: 100)
+- `--num_plots`: Number of examples to plot (default: 3)
+- `--device`: Device to use (auto, cuda, mps, cpu) (default: 'auto')
+- `--output_dir`: Directory to save output files (default: 'data')
+- `--num_demonstrations`: Number of demonstrations to collect if data file not found (default: 500)
+
+For Apple Silicon (M1, M2, M3) Macs:
+
+```bash
+python test.py --model_path model/cnp_model_YYYYMMDD_HHMMSS.pt --device mps
+```
+
+The script will:
+1. Load the trained model
+2. Generate or load demonstrations
+3. Create a test set with randomly sampled context points
+4. Compute MSE metrics for end-effector and object predictions
+5. Plot and save error bars and prediction visualizations
 
 ## Results
 
-The model is evaluated on two metrics:
-1. **End-effector prediction MSE**: Measures how well the model predicts the robot's end-effector position
-2. **Object prediction MSE**: Measures how well the model predicts the object's position
+The test script produces:
+1. MSE statistics for both end-effector and object predictions
+2. Error bar plots comparing the MSE for end-effector and object predictions
+3. Visualization of predictions vs. ground truth for selected test cases
 
-We perform 100 test runs with randomly generated observations and queries and compute the mean and standard deviation of these errors. The results are visualized in a bar plot.
+## Optimized Settings for MacBook Pro M3
 
-## Visualizations
+For optimal performance on Apple Silicon (M3):
+```bash
+# Training
+python train.py --device mps --hidden_size 256 --batch_size 64 --num_epochs 50 --learning_rate 0.001
 
-The code generates several visualizations:
-- `training_loss.png`: Plot of the training loss over epochs
-- `trajectory_visualization.png`: Visualization of an example trajectory showing end-effector and object positions
-- `prediction_visualization.png`: Visualization of model predictions against ground truth for an example trajectory
-- `test_errors.png`: Bar plot showing the mean and standard deviation of prediction errors
+# Testing
+python test.py --model_path model/cnp_model_YYYYMMDD_HHMMSS.pt --device mps
+```
 
-## References
+## Acknowledgements
 
-This implementation is based on the Conditional Neural Process model described in:
-- Garnelo, M., Rosenbaum, D., Maddison, C., Ramalho, T., Saxton, D., Shanahan, M., Teh, Y. W., Rezende, D., & Eslami, S. M. A. (2018). Conditional Neural Processes. International Conference on Machine Learning (ICML).
+The homework is based on CMPE591: Deep Learning in Robotics course materials.
