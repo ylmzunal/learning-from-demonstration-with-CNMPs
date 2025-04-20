@@ -7,7 +7,7 @@ import argparse
 # Import the necessary classes and functions from homework4.py
 from homework4 import Hw5Env, bezier
 
-def collect_demonstrations(num_demonstrations=100, time_steps=100, save_path='data/demonstrations.pkl', render_mode="offscreen"):
+def collect_demonstrations(num_demonstrations=1000, time_steps=150, save_path='data/demonstrations.pkl', render_mode="offscreen"):
     """
     Collect demonstrations using the Hw5Env from homework4.py.
     
@@ -75,8 +75,8 @@ if __name__ == "__main__":
     # Parse command line arguments
     parser = argparse.ArgumentParser(description='Collect robot trajectory demonstrations')
     parser.add_argument('--data_path', type=str, default='data/demonstrations.pkl', help='Path to save demonstration data')
-    parser.add_argument('--num_demonstrations', type=int, default=100, help='Number of demonstrations to collect')
-    parser.add_argument('--time_steps', type=int, default=100, help='Number of time steps per demonstration')
+    parser.add_argument('--num_demonstrations', type=int, default=1000, help='Number of demonstrations to collect')
+    parser.add_argument('--time_steps', type=int, default=150, help='Number of time steps per demonstration')
     parser.add_argument('--render_mode', type=str, default='offscreen', help='Rendering mode (offscreen or gui)')
     
     args = parser.parse_args()

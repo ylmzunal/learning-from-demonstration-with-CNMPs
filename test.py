@@ -68,7 +68,7 @@ def load_data(data_path):
         print("Please run collect_data.py first to generate the demonstrations.")
         exit(1)
 
-def create_test_set(demonstrations, heights, num_tests=100):
+def create_test_set(demonstrations, heights, num_tests=150):
     """Create a test set with randomly generated observations and queries."""
     test_set = []
     
