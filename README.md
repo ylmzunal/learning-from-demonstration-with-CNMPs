@@ -1,6 +1,6 @@
 # Learning from Demonstration with CNMPs
 
-This repository contains the implementation of Homework 4 for CMPE591, which focuses on learning from demonstration using Conditional Neural Processes (CNPs). The goal is to train a CNP model to predict robot end-effector and object positions based on partial demonstrations and object height.
+Learning from demonstration using Conditional Neural Processes (CNPs). The goal is to train a CNP model to predict robot end-effector and object positions based on partial demonstrations and object height.
 
 ## Overview
 
